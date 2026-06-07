@@ -1,5 +1,5 @@
 "use client";
-import{useState,useCallback}from"react";
+import{useState,useCallback,useEffect}from"react";
 import Nav from"@/components/Nav";
 import StatCard from"@/components/StatCard";
 import IndentCard from"@/components/IndentCard";
@@ -9,9 +9,10 @@ export default function DashboardClient({initialIndents}){
   const[indents,setIndents]=useState(initialIndents||[]);
   const[toast,setToast]=useState(null);
   const refresh=useCallback(async()=>{
-    const res=await fetch("/api/indents");
+    const res=await fetch("/api/indents?t="+Date.now(),{cache:"no-store"});
     if(res.ok)setIndents(await res.json());
   },[]);
+  useEffect(()=>{refresh();const t=setInterval(refresh,10000);return()=>clearInterval(t);},[]);
   const advance=async(indent)=>{
     const res=await fetch("/api/indents/"+indent.id+"/advance",{method:"PATCH"});
     const data=await res.json();
