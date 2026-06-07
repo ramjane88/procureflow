@@ -17,11 +17,11 @@ export default function TrackerPage(){
   },[]);
   useEffect(()=>{refresh();},[]);
   const advance=async(indent)=>{
-    const res=await fetch("/api/indents/"+indent.id+"/advance",{method:"PATCH"});
+    const res=await fetch(`/api/indents/${indent.id}/advance`,{method:"PATCH"});
     const data=await res.json();
     if(!res.ok){setToast({msg:data.error,type:"error"});return;}
     await refresh();
-    setToast({msg:indent.id+" moved to "+data.stage,type:"success"});
+    setToast({msg:`${indent.id} moved to ${data.stage}`,type:"success"});
   };
   const counts=STAGES.reduce((a,s)=>({...a,[s]:indents.filter(r=>r.stage===s).length}),{});
   const filtered=indents.filter(r=>{
@@ -50,7 +50,9 @@ export default function TrackerPage(){
           ?<div style={{textAlign:"center",padding:"60px",color:"var(--muted)",fontFamily:"var(--font-mono)"}}>Loading...</div>
           :filtered.length===0
           ?<div style={{textAlign:"center",padding:"60px",color:"var(--border2)",fontFamily:"var(--font-mono)",fontSize:13}}>No records found</div>
-          :<div style={{display:"flex",flexDirection:"column",gap:12}}>{filtered.map(r=><IndentCard key={r.id} indent={r} onAdvance={advance} showRail/>)}</div>
+          :<div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {filtered.map(r=><IndentCard key={r.id} indent={r} onAdvance={advance} onUpdate={refresh} showRail/>)}
+          </div>
         }
       </div>
     </div>
