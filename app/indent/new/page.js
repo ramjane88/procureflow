@@ -14,7 +14,25 @@ export default function NewIndentPage(){
   const[filtered,setFiltered]=useState([]);
   const[showSug,setShowSug]=useState(false);
   const[stockInfo,setStockInfo]=useState(null);
-  useEffect(()=>{fetch("/api/items").then(r=>r.json()).then(d=>{if(Array.isArray(d))setItems(d);});},[]);
+  const[poLoading,setPoLoading]=useState(false);
+
+  useEffect(()=>{
+    fetch("/api/items").then(r=>r.json()).then(d=>{if(Array.isArray(d))setItems(d);});
+    generatePO();
+  },[]);
+
+  const generatePO=async()=>{
+    setPoLoading(true);
+    try{
+      const res=await fetch("/api/indents");
+      const data=await res.json();
+      const year=new Date().getFullYear();
+      const count=(Array.isArray(data)?data.length:0)+1;
+      const po=`PO-${year}-${String(count).padStart(3,"0")}`;
+      setForm(f=>({...f,poNumber:po}));
+    }finally{setPoLoading(false);}
+  };
+
   const handleItemChange=(val)=>{
     setForm(f=>({...f,item:val}));setStockInfo(null);
     if(val.length<2){setFiltered([]);setShowSug(false);return;}
@@ -23,6 +41,7 @@ export default function NewIndentPage(){
   };
   const selectItem=(item)=>{setForm(f=>({...f,item:item.name,unit:item.unit}));setStockInfo(item);setShowSug(false);setFiltered([]);};
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+
   const validate=()=>{
     const e={};
     if(!form.item.trim())e.item="Item name is required";
@@ -32,6 +51,7 @@ export default function NewIndentPage(){
     if(stockInfo&&Number(form.qty)>stockInfo.current_stock)e.qty=`Only ${stockInfo.current_stock} ${stockInfo.unit} available`;
     return e;
   };
+
   const submit=async()=>{
     const e=validate();setErrors(e);
     if(Object.keys(e).length)return;
@@ -44,9 +64,11 @@ export default function NewIndentPage(){
       setTimeout(()=>router.push("/"),1200);
     }finally{setLoading(false);}
   };
+
   const lbl=(text,opt=false)=>(<label style={{fontSize:11,color:"var(--muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:1,marginBottom:6,display:"block"}}>{text}{opt&&<span style={{color:"var(--border2)"}}> (optional)</span>}</label>);
   const err=(k)=>errors[k]&&<div style={{fontSize:11,color:"var(--red)",fontFamily:"var(--font-mono)",marginTop:5}}>⚠ {errors[k]}</div>;
   const ok=(show,text)=>show&&<div style={{fontSize:11,color:"var(--green)",fontFamily:"var(--font-mono)",marginTop:5}}>✓ {text}</div>;
+
   return(
     <div>
       <Toast message={toast&&toast.msg} type={toast&&toast.type} onDone={()=>setToast(null)}/>
@@ -84,8 +106,15 @@ export default function NewIndentPage(){
             <div>{lbl("Unit")}<select value={form.unit} onChange={e=>set("unit",e.target.value)}>{UNITS.map(u=><option key={u}>{u}</option>)}</select></div>
           </div>
           <div>{lbl("Department")}<select value={form.dept} onChange={e=>set("dept",e.target.value)}>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></div>
-          <div>{lbl("Vendor Name *")}<input value={form.vendor} onChange={e=>set("vendor",e.target.value)} className={errors.vendor?"err":""} placeholder="e.g. PetroSupplies Ltd"/>{err("vendor")}{ok(form.vendor.length>2&&!errors.vendor,"Vendor accepted")}</div>
-          <div>{lbl("PO Number",true)}<input value={form.poNumber} onChange={e=>set("poNumber",e.target.value)} placeholder="PO-2024-XXX"/>{ok(form.poNumber.length>0,"PO reference captured")}</div>
+          <div>{lbl("Vendor Name *")}<input value={form.vendor} onChange={e=>set("vendor",e.target.value)} className={errors.vendor?"err":""} placeholder="e.g. Sri Balaji Traders"/>{err("vendor")}{ok(form.vendor.length>2&&!errors.vendor,"Vendor accepted")}</div>
+          <div>
+            {lbl("PO Number")}
+            <div style={{position:"relative"}}>
+              <input value={form.poNumber} onChange={e=>set("poNumber",e.target.value)} placeholder="Auto-generating..."/>
+              {poLoading&&<div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"var(--muted)",fontFamily:"var(--font-mono)"}}>generating...</div>}
+            </div>
+            {form.poNumber&&!poLoading&&<div style={{fontSize:11,color:"var(--cyan)",fontFamily:"var(--font-mono)",marginTop:5}}>✓ Auto-generated PO — editable if needed</div>}
+          </div>
           <div>{lbl("Remarks",true)}<input value={form.remarks} onChange={e=>set("remarks",e.target.value)} placeholder="Urgent / Critical"/></div>
           <button onClick={submit} disabled={loading} style={{background:"linear-gradient(135deg,var(--gold),#d97706)",color:"#000",border:"none",borderRadius:10,padding:"14px",fontWeight:800,fontSize:14,fontFamily:"var(--font-mono)",opacity:loading?0.7:1,marginTop:8}}>{loading?"RAISING...":"RAISE INDENT →"}</button>
         </div>
