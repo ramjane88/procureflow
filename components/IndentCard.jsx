@@ -16,13 +16,13 @@ export default function IndentCard({indent,onAdvance,onUpdate,showRail=false}){
   const savePO=async()=>{
     setSaving(true);
     try{
-      const res=await fetch(`/api/indents/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({po_number:poVal})});
+      const res=await fetch("/api/indents/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({po_number:poVal})});
       if(res.ok&&onUpdate)onUpdate();
       setEditPO(false);
     }finally{setSaving(false);}
   };
   return(
-    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderLeft:`4px solid ${c}`,borderRadius:14,padding:"18px 20px",transition:"transform 0.15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderLeft:"4px solid "+c,borderRadius:14,padding:"18px 20px",transition:"transform 0.15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
         <div style={{flex:1}}>
           <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{item}</div>
@@ -50,11 +50,16 @@ export default function IndentCard({indent,onAdvance,onUpdate,showRail=false}){
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,minWidth:160}}>
           <Badge stage={stage}/>
           {nextStage&&onAdvance?(
-            <button onClick={()=>onAdvance(indent)} title={validation||""} style={{background:c+"18",border:`1px solid ${c}`,color:c,borderRadius:8,padding:"7px 14px",fontSize:11,fontFamily:"var(--font-mono)",fontWeight:700,transition:"all 0.2s"}}>
+            <button onClick={()=>onAdvance(indent)} title={validation||""} style={{background:c+"18",border:"1px solid "+c,color:c,borderRadius:8,padding:"7px 14px",fontSize:11,fontFamily:"var(--font-mono)",fontWeight:700,transition:"all 0.2s"}}>
               &#8594; {nextStage}
             </button>
           ):stage==="Receipt"?(
-            <span style={{fontSize:11,color:"var(--green)",fontFamily:"var(--font-mono)"}}>&#10003; Complete</span>
+            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              <span style={{fontSize:11,color:"var(--green)",fontFamily:"var(--font-mono)"}}>&#10003; Complete</span>
+              <a href={"/receipt/"+id}>
+                <button style={{background:"var(--green)22",border:"1px solid var(--green)",color:"var(--green)",borderRadius:8,padding:"6px 12px",fontSize:10,fontFamily:"var(--font-mono)",fontWeight:700,cursor:"pointer"}}>View Receipt</button>
+              </a>
+            </div>
           ):null}
         </div>
       </div>
